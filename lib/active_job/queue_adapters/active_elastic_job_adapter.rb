@@ -152,7 +152,7 @@ module ActiveJob
           return @queue_urls[cache_key] if @queue_urls[cache_key]
           resp = aws_sqs_client.get_queue_url(queue_name: queue_name.to_s)
           @queue_urls[cache_key] = resp.queue_url
-        rescue Aws::SQS::Errors::NonExistentQueue => e
+        rescue Aws::SQS::Errors::NonExistentQueue => _e
           raise NonExistentQueue.new(queue_name, aws_region)
         end
 
@@ -172,15 +172,15 @@ module ActiveJob
         end
 
         def aws_sqs_client
-          @aws_sqs_client ||= Aws::SQS::Client.new(credentials: aws_sqs_client_credentials )
+          @aws_sqs_client ||= Aws::SQS::Client.new(credentials: aws_sqs_client_credentials)
         end
 
         def aws_sqs_client_credentials
-          @aws_credentials ||= if config.aws_credentials.kind_of?(Proc)
-                                 config.aws_credentials.call
-                               else
-                                 config.aws_credentials
-                               end
+          @aws_sqs_client_credentials ||= if config.aws_credentials.is_a?(Proc)
+                                            config.aws_credentials.call
+                                          else
+                                            config.aws_credentials
+                                          end
         end
 
         def aws_region
@@ -191,13 +191,13 @@ module ActiveJob
           Rails.application.config.active_elastic_job
         end
 
-        def message_digest(messsage_body)
+        def message_digest(message_body)
           @verifier ||= ActiveElasticJob::MessageVerifier.new(secret_key_base)
-          @verifier.generate_digest(messsage_body)
+          @verifier.generate_digest(message_body)
         end
 
-        def verify_md5_digests!(response, messsage_body, message_attributes)
-          calculated = md5_of_message_body(messsage_body)
+        def verify_md5_digests!(response, message_body, message_attributes)
+          calculated = md5_of_message_body(message_body)
           returned = response.md5_of_message_body
           if calculated != returned
             raise MD5MismatchError.new response.message_id, calculated, returned
@@ -206,7 +206,7 @@ module ActiveJob
           if message_attributes
             calculated = md5_of_message_attributes(message_attributes)
             returned = response.md5_of_message_attributes
-            if  calculated != returned
+            if calculated != returned
               raise MD5MismatchError.new response.message_id, calculated, returned
             end
           end
