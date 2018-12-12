@@ -136,7 +136,7 @@ module ActiveJob
           }
 
           if queue_name.split(".").last == "fifo"
-            args.merge(message_group_id: Thread.current.object_id)
+            args.merge(message_group_id: Thread.current.object_id.to_s)
           else
             args.merge(delay_seconds: calculate_delay(timestamp))
           end
