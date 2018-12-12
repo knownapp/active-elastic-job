@@ -129,19 +129,28 @@ module ActiveJob
         end
 
         def build_message(queue_name, serialized_job, timestamp)
-          {
+          args = {
             queue_url: queue_url(queue_name),
             message_body: serialized_job,
-            delay_seconds: calculate_delay(timestamp),
-            message_attributes: {
-              "message-digest".freeze => {
-                string_value: message_digest(serialized_job),
-                data_type: "String".freeze
-              },
-              origin: {
-                string_value: ActiveElasticJob::ACRONYM,
-                data_type: "String".freeze
-              }
+            message_attributes: build_message_attributes(serialized_job)
+          }
+
+          if queue_name.split(".").last == "fifo"
+            args.merge(message_group_id: Thread.current.object_id)
+          else
+            args.merge(delay_seconds: calculate_delay(timestamp))
+          end
+        end
+
+        def build_message_attributes(serialized_job)
+          {
+            "message-digest".freeze => {
+              string_value: message_digest(serialized_job),
+              data_type: "String".freeze
+            },
+            origin: {
+              string_value: ActiveElasticJob::ACRONYM,
+              data_type: "String".freeze
             }
           }
         end
