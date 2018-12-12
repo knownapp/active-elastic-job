@@ -110,7 +110,8 @@ module ActiveJob
             verify_md5_digests!(
               resp,
               message[:message_body],
-              message[:message_attributes])
+              message[:message_attributes]
+            )
           end
         rescue Aws::SQS::Errors::NonExistentQueue => e
           unless @queue_urls[job.queue_name.to_s].nil?
